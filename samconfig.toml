@@ -1,0 +1,22 @@
+version = 0.1
+
+[default]
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+stack_name = "cfcd-dev"
+s3_bucket = "YOUR_S3_BUCKET_NAME"
+s3_prefix = "cloudfront-cd-stepfunctions/dev"
+profile = "YOUR_AWS_PROFILE_NAME"
+region = "YOUR_AWS_DEFAULT_REGION"
+confirm_changeset = true
+capabilities = "CAPABILITY_NAMED_IAM"
+parameter_overrides = [
+  "Environment=dev"
+]

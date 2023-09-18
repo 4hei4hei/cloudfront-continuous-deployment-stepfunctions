@@ -1,0 +1,166 @@
+{
+  "Comment": "A Step Functions state machine for CloudFront Continuous Deployment",
+  "StartAt": "CreateStagingDistribution",
+  "States": {
+    "CreateStagingDistribution": {
+      "Type": "Task",
+      "Resource": "${CreateStagingDistributionFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ClientExecutionTimeoutException",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "WaitForDistributionAvailable"
+    },
+    "WaitForDistributionAvailable": {
+      "Type": "Wait",
+      "Seconds": 60,
+      "Next": "HealthCheckForStagingDistribution"
+    },
+    "HealthCheckForStagingDistribution": {
+      "Type": "Task",
+      "Resource": "${HealthCheckFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ClientExecutionTimeoutException",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CheckResultForDistributionAvailable"
+    },
+    "CheckResultForDistributionAvailable": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ok",
+          "Next": "TestDistribution"
+        },
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ng",
+          "Next": "WaitForDistributionAvailable"
+        }
+      ],
+      "Default": "EndStateMachine"
+    },
+    "TestDistribution": {
+      "Type": "Task",
+      "Resource": "${TestDistributionFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ClientExecutionTimeoutException",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CheckTestDistributionResult"
+    },
+    "CheckTestDistributionResult": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.TestResult",
+          "StringEquals": "ok",
+          "Next": "PromoteDistribution"
+        },
+        {
+          "Variable": "$.TestResult",
+          "StringEquals": "ng",
+          "Next": "EndStateMachine"
+        }
+      ],
+      "Default": "EndStateMachine"
+    },
+    "PromoteDistribution": {
+      "Type": "Task",
+      "Resource": "${PromoteDistributionFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ClientExecutionTimeoutException",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "WaitForPromoteDistribution"
+    },
+    "WaitForPromoteDistribution": {
+      "Type": "Wait",
+      "Seconds": 60,
+      "Next": "HealthCheckForPromoteDistribution"
+    },
+    "HealthCheckForPromoteDistribution": {
+      "Type": "Task",
+      "Resource": "${HealthCheckFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Next": "CheckResultForPromoteDistribution"
+    },
+    "CheckResultForPromoteDistribution": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ok",
+          "Next": "EndStateMachine"
+        },
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ng",
+          "Next": "WaitForPromoteDistribution"
+        }
+      ],
+      "Default": "EndStateMachine"
+    },
+
+    "EndStateMachine": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}

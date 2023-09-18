@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+
+  SAM Template for CloudFront Continuous Deployment
+
+Globals:
+  Function:
+    Runtime: python3.10
+    Handler: app.lambda_handler
+    Timeout: 180
+
+Parameters:
+  ResourcePrefix:
+    Type: String
+    Default: cfcd
+
+Resources:
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: !Sub ${ResourcePrefix}
+      Role: !GetAtt StateMachineExecutionRole.Arn
+      DefinitionUri: statemachine/cloudfront_continous_deployment.asl.json
+      DefinitionSubstitutions:
+        CreateStagingDistributionFunctionArn: !GetAtt CreateStagingDistributionFunction.Arn
+        HealthCheckFunctionArn: !GetAtt HealthCheckFunction.Arn
+        TestDistributionFunctionArn: !GetAtt TestDistributionFunction.Arn
+        PromoteDistributionFunctionArn: !GetAtt PromoteDistributionFunction.Arn
+  StateMachineExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ResourcePrefix}-statemachine-exec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StateMachineExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:invokeFunction
+                Resource:
+                  - !GetAtt CreateStagingDistributionFunction.Arn
+                  - !GetAtt HealthCheckFunction.Arn
+                  - !GetAtt TestDistributionFunction.Arn
+                  - !GetAtt PromoteDistributionFunction.Arn
+
+  CreateStagingDistributionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${ResourcePrefix}-create-staging-distribution
+      CodeUri: functions/create_staging_distribution/
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  HealthCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${ResourcePrefix}-healthcheck
+      CodeUri: functions/healthcheck/
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  TestDistributionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${ResourcePrefix}-test-distribution
+      CodeUri: functions/test_distribution/
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  PromoteDistributionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${ResourcePrefix}-promote-distribution
+      CodeUri: functions/promote_distribution/
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ResourcePrefix}-lambda-exec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cloudfront:CopyDistribution
+                  - cloudfront:CreateContinuousDeploymentPolicy
+                  - cloudfront:CreateDistribution
+                  - cloudfront:DeleteContinuousDeploymentPolicy
+                  - cloudfront:DeleteDistribution
+                  - cloudfront:GetContinuousDeploymentPolicyConfig
+                  - cloudfront:GetDistribution
+                  - cloudfront:GetDistributionConfig
+                  - cloudfront:UpdateContinuousDeploymentPolicy
+                  - cloudfront:UpdateDistribution
+                Resource: "*"
