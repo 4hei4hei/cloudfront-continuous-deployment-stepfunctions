@@ -6,21 +6,23 @@ Amazon CloudFront の Continous Deployment を AWS StepFunctions で自動化さ
 
 Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動作することを確認
 
-- Python ^3.10.11
+- AWS SAM CLI 1.100.0
 
-- Poetry ^1.4.1
+- Python ^3.11.5
+
+- Poetry ^1.6.1
 
 # Preconditions
 
-事前に Amazon S3 Bucket 等の Origin (含 CNAME) を準備し、CloudFront Distribution をデプロイしておく
+本リポジトリの StepFunctions では Origin を S3 とする CloudFront を前提としている
 
-デフォルトルートオブジェクトの位置はサンプルとして
+そのため事前に Origin となる S3 の以下のパスに index.html を 2 種類用意する
 
-```
-{color: blue or green}/index.html
-```
+- s3://{S3_BUCKET_NAME}/blue/index.html
 
-の書式で設定している (version 等にも設定可能)
+- s3://{S3_BUCKET_NAME}/green/index.html
+
+いずれかを CloudFront 経由で閲覧できる状態としておく
 
 # How to use
 
@@ -39,10 +41,6 @@ Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動�
 以下のフローを辿る StateMachine の処理が起動する
 
 ![StateMachine Sample](./statemachine_flow.png)
-
-# Notes
-
-処理の最中に作成される Staging Distribution や Continuous Deployment Policy の削除を追加実装したい
 
 # References
 
