@@ -7,12 +7,12 @@ env = "default"
 @invoke.task
 def build(c):
     invoke.run(
-        "poetry export -f requirements.txt --without-hashes --output ./src/requirements.txt"
+        "poetry export -f requirements.txt --with test_distribution --without-hashes --output ./functions/test_distribution/requirements.txt"
     )
-    invoke.run("black ./")
-    invoke.run("sam validate")
-    invoke.run("sam build -p")
-    
+    invoke.run("black functions")
+    invoke.run("sam validate --lint")
+    invoke.run("sam build --parallel")
+
 
 @invoke.task(build)
 def plan(c, env="default"):
