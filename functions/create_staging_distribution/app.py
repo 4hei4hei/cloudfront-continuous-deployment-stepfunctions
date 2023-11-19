@@ -17,7 +17,6 @@ def lambda_handler(event, context):
         Id=primary_distribution_id
     )
     staging_caller_reference = str(uuid.uuid4())
-    print("CallerReference: " + staging_caller_reference)
     staging_distribution = cloudfront.copy_distribution(
         PrimaryDistributionId=primary_distribution_id,
         Staging=True,
@@ -46,7 +45,7 @@ def lambda_handler(event, context):
     )
 
     # ContinuousDeploymentPolicy (継続的デプロイメント用の設定) を作成する
-    traffic_config = {
+    staging_traffic_config = {
         "Type": "SingleHeader",
         "SingleHeaderConfig": {"Header": "aws-cf-cd-staging", "Value": "true"},
     }
@@ -58,7 +57,7 @@ def lambda_handler(event, context):
             ],
         },
         "Enabled": True,
-        "TrafficConfig": traffic_config,
+        "TrafficConfig": staging_traffic_config,
     }
 
     continuous_deployment_policy = cloudfront.create_continuous_deployment_policy(
@@ -69,7 +68,6 @@ def lambda_handler(event, context):
     primary_distribution_config = cloudfront.get_distribution_config(
         Id=primary_distribution_id
     )
-    primary_distribution_etag = primary_distribution_config["ETag"]
     update_distribution_config = primary_distribution_config["DistributionConfig"]
     update_distribution_config[
         "ContinuousDeploymentPolicyId"
@@ -80,21 +78,13 @@ def lambda_handler(event, context):
         DistributionConfig=update_distribution_config,
     )
 
-    staging_distribution_config = cloudfront.get_distribution_config(
-        Id=staging_distribution_id
-    )
-    staging_distribution_etag = staging_distribution_config["ETag"]
-
     return {
         "Payload": payload
         | {
             "ContinuousDeploymentPolicyId": continuous_deployment_policy[
                 "ContinuousDeploymentPolicy"
             ]["Id"],
-            "ContinuousDeploymentPolicyETag": continuous_deployment_policy["ETag"],
-            "PrimaryDistributionEtag": primary_distribution_etag,
             "StagingDistributionId": staging_distribution_id,
-            "StagingDistributionEtag": staging_distribution_etag,
             "StagingCallerReference": staging_caller_reference,
         }
     }
