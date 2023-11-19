@@ -1,6 +1,12 @@
 # cloudfront-continuous-deployment-stepfunctions
 
-Amazon CloudFront の Continous Deployment を AWS StepFunctions で自動化させる
+Amazon CloudFront Continous Deployment を AWS StepFunctions で自動化させる
+
+仕様
+
+- Staging distribution と Continuous deployment policy の作成から Promote を行う
+
+- その後、Continuous deployment policy の detach と Staging distribution を Disabled 状態にする後掃除までを行う
 
 # Requirements
 
@@ -32,9 +38,9 @@ Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動�
 
 ```
 {
-  "Url": "https://{hoge.fuga}",
-  "PrimaryDistributionId": "{既にデプロイされている PrimaryDistribution の ID}",
-  "StagingDistributionColor": "{blue or green}"
+  "Url": "https://hoge.fuga",
+  "PrimaryDistributionId": "既にデプロイされている Primary distribution の ID",
+  "StagingDistributionColor": "Staging に設定する色 (blue or green)"
 }
 ```
 

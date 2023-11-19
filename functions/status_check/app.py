@@ -12,7 +12,7 @@ def lambda_handler(event, context):
     staging_distribution_id = payload["StagingDistributionId"]
     distribution_status_result = "ng"
 
-    # Distribution の状態を取得して利用可能かを判定させる
+    # Primary / Staging distribution の状態を取得して利用可能かを判定させる
     primary_distribution_status_result = cloudfront.get_distribution(
         Id=primary_distribution_id
     )["Distribution"]["Status"]

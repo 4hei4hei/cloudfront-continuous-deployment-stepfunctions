@@ -1,5 +1,5 @@
 {
-  "Comment": "Step Functions state machine for cloudfront-continuous-deployment",
+  "Comment": "State machine for cloudfront-continuous-deployment",
   "StartAt": "CreateStagingDistribution",
   "States": {
     "CreateStagingDistribution": {

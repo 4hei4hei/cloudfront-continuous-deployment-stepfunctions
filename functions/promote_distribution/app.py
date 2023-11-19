@@ -18,7 +18,7 @@ def lambda_handler(event, context):
         Id=staging_distribution_id
     )["ETag"]
 
-    # StagingDistribution の設定を Primary として昇格させる
+    # Staging distribution の設定を Primary distribution として昇格させる
     cloudfront.update_distribution_with_staging_config(
         Id=primary_distribution_id,
         StagingDistributionId=staging_distribution_id,

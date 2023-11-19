@@ -23,12 +23,12 @@ def lambda_handler(event, context):
         )["ETag"]
     )
 
-    # Continuous Deployment Policy を削除する
+    # Continuous deployment policy を削除する
     cloudfront.delete_continuous_deployment_policy(
         Id=continuous_deployment_policy_id, IfMatch=continuous_deployment_policy_etag
     )
 
-    # Staging Distribution を Disabled にし、ContinuousDeploymentPolicy の関連付けを削除する
+    # Staging distribution を Disabled にし、Continuous deployment policy の関連付けを削除する
     staging_distribution_config["Enabled"] = False
     staging_distribution_config["ContinuousDeploymentPolicyId"] = ""
     cloudfront.update_distribution(

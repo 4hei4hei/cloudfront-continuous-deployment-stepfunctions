@@ -17,7 +17,7 @@ def lambda_handler(event, context):
         )["ETag"]
     )
 
-    # PrimaryDistribution の ContinuousDeploymentPolicy を外す (Id を空に設定して Update をかける)
+    # Primary distribution の Continuous deployment policy を外す (ContinuousDeploymentPolicyId を空に設定して Update をかける)
     primary_distribution_config = cloudfront.get_distribution_config(
         Id=primary_distribution_id
     )
@@ -32,7 +32,7 @@ def lambda_handler(event, context):
         DistributionConfig=update_primary_distribution_config,
     )
 
-    # ContinuousDeploymentPolicy (継続的デプロイメント用の設定) を無効化する
+    # Continuous deployment policy (継続的デプロイメント用の設定) を無効化する
     staging_distribution = cloudfront.get_distribution(Id=staging_distribution_id)
     traffic_config = {
         "Type": "SingleHeader",
