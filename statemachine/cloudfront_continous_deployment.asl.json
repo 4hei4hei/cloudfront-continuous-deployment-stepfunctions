@@ -1,5 +1,5 @@
 {
-  "Comment": "A Step Functions state machine for CloudFront Continuous Deployment",
+  "Comment": "State machine for cloudfront-continuous-deployment",
   "StartAt": "CreateStagingDistribution",
   "States": {
     "CreateStagingDistribution": {
@@ -27,11 +27,11 @@
     "WaitForDistributionAvailable": {
       "Type": "Wait",
       "Seconds": 60,
-      "Next": "HealthCheckForStagingDistribution"
+      "Next": "StatusCheckForStagingDistribution"
     },
-    "HealthCheckForStagingDistribution": {
+    "StatusCheckForStagingDistribution": {
       "Type": "Task",
-      "Resource": "${HealthCheckFunctionArn}",
+      "Resource": "${StatusCheckFunctionArn}",
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$"
@@ -130,11 +130,11 @@
     "WaitForPromoteDistribution": {
       "Type": "Wait",
       "Seconds": 60,
-      "Next": "HealthCheckForPromoteDistribution"
+      "Next": "StatusCheckForPromoteDistribution"
     },
-    "HealthCheckForPromoteDistribution": {
+    "StatusCheckForPromoteDistribution": {
       "Type": "Task",
-      "Resource": "${HealthCheckFunctionArn}",
+      "Resource": "${StatusCheckFunctionArn}",
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$"
@@ -147,7 +147,7 @@
         {
           "Variable": "$.DistributionStatusResult",
           "StringEquals": "ok",
-          "Next": "EndStateMachine"
+          "Next": "DetachContinuousDeploymentpolicy"
         },
         {
           "Variable": "$.DistributionStatusResult",
@@ -157,7 +157,67 @@
       ],
       "Default": "EndStateMachine"
     },
-
+    "DetachContinuousDeploymentpolicy": {
+      "Type": "Task",
+      "Resource": "${DetachContinuousDeploymentPolicyFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Next": "WaitForDisableStagingDistribution"
+    },
+    "WaitForDisableStagingDistribution": {
+      "Type": "Wait",
+      "Seconds": 60,
+      "Next": "StatusCheckForDisableStagingDistribution"
+    },
+    "StatusCheckForDisableStagingDistribution": {
+      "Type": "Task",
+      "Resource": "${StatusCheckFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Next": "CheckResultForDisableStagingDistribution"
+    },
+    "CheckResultForDisableStagingDistribution": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ok",
+          "Next": "DisableStagingDistribution"
+        },
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ng",
+          "Next": "WaitForDisableStagingDistribution"
+        }
+      ],
+      "Default": "EndStateMachine"
+    },
+    "DisableStagingDistribution": {
+      "Type": "Task",
+      "Resource": "${DisableStagingDistributionFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ClientExecutionTimeoutException",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "EndStateMachine"
+    },
     "EndStateMachine": {
       "Type": "Pass",
       "End": true

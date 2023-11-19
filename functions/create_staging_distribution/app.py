@@ -12,12 +12,11 @@ def lambda_handler(event, context):
     primary_distribution_id = payload["PrimaryDistributionId"]
     staging_distribution_color = payload["StagingDistributionColor"]
 
-    # PrimaryDistribution を基に StaigingDistribution を作成する
+    # Primary distribution を基に Staiging distribution を作成する
     primary_distribution_config = cloudfront.get_distribution_config(
         Id=primary_distribution_id
     )
     staging_caller_reference = str(uuid.uuid4())
-    print("CallerReference: " + staging_caller_reference)
     staging_distribution = cloudfront.copy_distribution(
         PrimaryDistributionId=primary_distribution_id,
         Staging=True,
@@ -25,28 +24,28 @@ def lambda_handler(event, context):
         CallerReference=staging_caller_reference,
     )
 
-    # StagingDistribution の ID と Config 設定をまるっと変数化 (後工程で流用するため)
+    # Staging distribution の ID と Distribution config 設定をまるっと変数化 (後工程で流用するため)
     staging_distribution_id = staging_distribution["Distribution"]["Id"]
     staging_distribution_config = cloudfront.get_distribution_config(
         Id=staging_distribution_id
     )["DistributionConfig"]
 
-    # 流用する Config のうち、上書きしたいものをここで上書きしておく
+    # 流用する Distribution config の中で上書きしたい項目をここで上書きしておく
     # 今回は Staging であることを判定する項目を True とし、インデックスドキュメントの配置場所を更新させる
     staging_distribution_config["Staging"] = True
     staging_distribution_config[
         "DefaultRootObject"
     ] = f"{staging_distribution_color}/index.html"
 
-    # 作成した StagingDistribution を Update する
+    # 作成した Staging distribution を Update する
     cloudfront.update_distribution(
         Id=staging_distribution_id,
         IfMatch=staging_distribution["ETag"],
         DistributionConfig=staging_distribution_config,
     )
 
-    # ContinuousDeploymentPolicy (継続的デプロイメント用の設定) を作成する
-    traffic_config = {
+    # Continuous deployment policy (継続的デプロイメント用の設定) を作成する
+    staging_traffic_config = {
         "Type": "SingleHeader",
         "SingleHeaderConfig": {"Header": "aws-cf-cd-staging", "Value": "true"},
     }
@@ -58,18 +57,17 @@ def lambda_handler(event, context):
             ],
         },
         "Enabled": True,
-        "TrafficConfig": traffic_config,
+        "TrafficConfig": staging_traffic_config,
     }
 
     continuous_deployment_policy = cloudfront.create_continuous_deployment_policy(
         ContinuousDeploymentPolicyConfig=continuous_deployment_policy_config
     )
 
-    # 作成したポリシを PrimaryDistribution にアタッチして Update をかける
+    # 作成したポリシを Primary distribution にアタッチして Update をかける
     primary_distribution_config = cloudfront.get_distribution_config(
         Id=primary_distribution_id
     )
-    primary_distribution_etag = primary_distribution_config["ETag"]
     update_distribution_config = primary_distribution_config["DistributionConfig"]
     update_distribution_config[
         "ContinuousDeploymentPolicyId"
@@ -80,21 +78,13 @@ def lambda_handler(event, context):
         DistributionConfig=update_distribution_config,
     )
 
-    staging_distribution_config = cloudfront.get_distribution_config(
-        Id=staging_distribution_id
-    )
-    staging_distribution_etag = staging_distribution_config["ETag"]
-
     return {
         "Payload": payload
         | {
             "ContinuousDeploymentPolicyId": continuous_deployment_policy[
                 "ContinuousDeploymentPolicy"
             ]["Id"],
-            "ContinuousDeploymentPolicyETag": continuous_deployment_policy["ETag"],
-            "PrimaryDistributionEtag": primary_distribution_etag,
             "StagingDistributionId": staging_distribution_id,
-            "StagingDistributionEtag": staging_distribution_etag,
             "StagingCallerReference": staging_caller_reference,
         }
     }

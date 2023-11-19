@@ -12,7 +12,7 @@ def lambda_handler(event, context):
     staging_distribution_id = payload["StagingDistributionId"]
     distribution_status_result = "ng"
 
-    # Distribution の状態を取得して利用可能かを判定させる
+    # Primary / Staging distribution の状態を取得して利用可能かを判定させる
     primary_distribution_status_result = cloudfront.get_distribution(
         Id=primary_distribution_id
     )["Distribution"]["Status"]
@@ -25,9 +25,23 @@ def lambda_handler(event, context):
         and staging_distribution_status_result == "Deployed"
     ):
         distribution_status_result = "ok"
+        primary_distribution_etag = cloudfront.get_distribution_config(
+            Id=primary_distribution_id
+        )["ETag"]
+        staging_distribution_etag = cloudfront.get_distribution_config(
+            Id=staging_distribution_id
+        )["ETag"]
+        return {
+            "Payload": payload
+            | {
+                "DistributionStatusResult": distribution_status_result,
+                "PrimaryDistributionETag": primary_distribution_etag,
+                "StagingDistributionETag": staging_distribution_etag,
+            }
+        }
     else:
         distribution_status_result = "ng"
-
-    return {
-        "Payload": payload | {"DistributionStatusResult": distribution_status_result}
-    }
+        return {
+            "Payload": payload
+            | {"DistributionStatusResult": distribution_status_result}
+        }
