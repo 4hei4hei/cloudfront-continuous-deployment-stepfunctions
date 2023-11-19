@@ -14,9 +14,9 @@ Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動�
 
 - AWS SAM CLI 1.100.0
 
-- Python ^3.11.5
+- Python 3.11.5
 
-- Poetry ^1.6.1
+- Poetry 1.6.1
 
 # Preconditions
 
