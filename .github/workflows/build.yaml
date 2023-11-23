@@ -2,28 +2,26 @@ name: build
 
 on: [push]
 
+env:
+  PYTHON_VERSION: 3.11
+  AWS_SAM_CLI_VERSION: 1.100.0
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
-        aws-sam-cli-version: [1.100.0]
+    # strategy:
+    #   matrix:
+    #     python-version: [3.11]
+    #     aws-sam-cli-version: [1.100.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Set up AWS SAM CLI ${{ matrix.aws-sam-cli-version }}
-        uses: aws-actions/setup-sam@v2
-        with:
-          version: ${{ matrix.aws-sam-cli-version }}
-      - name: Install poetry
-        run: pip install --upgrade pip && pip install poetry
-      - name: Install packages
+      - name: Set up asdf
+        uses: asdf-vm/actions/install@v2
+      - name: Install tools
+        run: asdf install
+      - name: Install python packages
         run: poetry install --no-interaction --with dev
       - name: Run test
         run: poetry run cfn-lint --template template.yaml
