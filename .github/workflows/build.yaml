@@ -25,9 +25,14 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    matrix:
+      aws-sam-cli-version: [1.100.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build
+      - name: Set up AWS SAM CLI
         uses: aws-actions/setup-sam@v2
+        with:
+          version: ${{ matrix.aws-sam-cli-version }}
+      - name: Run build
         run: sam build --use-container
