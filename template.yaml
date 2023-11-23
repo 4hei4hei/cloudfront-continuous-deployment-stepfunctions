@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   python3.11
 
-  SAM Template for cloudfront-continuous-deployment-statemachine
+  SAM Template for cloudfront-continuous-deployment-stepfunctions
 
 Globals:
   Function:
@@ -22,7 +22,7 @@ Resources:
     Properties:
       Name: !Sub ${ResourcePrefix}-statemachine
       Role: !GetAtt CloudFrontContinuousDeploymentStateMachineExecutionRole.Arn
-      DefinitionUri: statemachine/cloudfront_continous_deployment.asl.json
+      DefinitionUri: statemachine/workflow.asl.json
       DefinitionSubstitutions:
         CreateStagingDistributionFunctionArn: !GetAtt CreateStagingDistributionFunction.Arn
         StatusCheckFunctionArn: !GetAtt StatusCheckFunction.Arn
@@ -30,6 +30,7 @@ Resources:
         PromoteDistributionFunctionArn: !GetAtt PromoteDistributionFunction.Arn
         DetachContinuousDeploymentPolicyFunctionArn: !GetAtt DetachContinuousDeploymentPolicyFunction.Arn
         DisableStagingDistributionFunctionArn: !GetAtt DisableStagingDistributionFunction.Arn
+        DeleteStagingDistributionFunctionArn: !GetAtt DeleteStagingDistributionFunction.Arn
 
   CloudFrontContinuousDeploymentStateMachineExecutionRole:
     Type: AWS::IAM::Role
@@ -57,6 +58,7 @@ Resources:
                   - !GetAtt PromoteDistributionFunction.Arn
                   - !GetAtt DetachContinuousDeploymentPolicyFunction.Arn
                   - !GetAtt DisableStagingDistributionFunction.Arn
+                  - !GetAtt DeleteStagingDistributionFunction.Arn
 
   CreateStagingDistributionFunction:
     Type: AWS::Serverless::Function
@@ -98,6 +100,13 @@ Resources:
     Properties:
       FunctionName: !Sub ${ResourcePrefix}-disable-staging-distribution-function
       CodeUri: functions/disable_staging_distribution
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  DeleteStagingDistributionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${ResourcePrefix}-delete-staging-distribution-function
+      CodeUri: functions/delete_staging_distribution
       Role: !GetAtt LambdaExecutionRole.Arn
 
   LambdaExecutionRole:

@@ -34,6 +34,20 @@ Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動�
 
 1. AWS SAM CLI にて本 SAM テンプレートをデプロイする
 
+デプロイまでのコマンドは 通常の AWS SAM CLI で可能
+
+```
+sam build && sam deploy
+```
+
+本リポジトリでは Python パッケージ invoke でタスク化している
+
+そのため、以下のコマンドでビルドからデプロイまでが自動で実行可能
+
+```
+inv deploy
+```
+
 2. デプロイされた StepFucntions を以下フォーマットの json を入力として実行する
 
 ```

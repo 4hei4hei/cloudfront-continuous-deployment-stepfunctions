@@ -1,8 +1,8 @@
 {
-  "Comment": "State machine for cloudfront-continuous-deployment",
-  "StartAt": "CreateStagingDistribution",
+  "Comment": "State machine for cloudfront continuous deployment",
+  "StartAt": "Create staging distribution",
   "States": {
-    "CreateStagingDistribution": {
+    "Create staging distribution": {
       "Type": "Task",
       "Resource": "${CreateStagingDistributionFunctionArn}",
       "OutputPath": "$.Payload",
@@ -22,14 +22,14 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "WaitForDistributionAvailable"
+      "Next": "Wait for distribution to become to available"
     },
-    "WaitForDistributionAvailable": {
+    "Wait for distribution to become to available": {
       "Type": "Wait",
       "Seconds": 60,
-      "Next": "StatusCheckForStagingDistribution"
+      "Next": "Get distribution status"
     },
-    "StatusCheckForStagingDistribution": {
+    "Get distribution status": {
       "Type": "Task",
       "Resource": "${StatusCheckFunctionArn}",
       "OutputPath": "$.Payload",
@@ -49,25 +49,25 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "CheckResultForDistributionAvailable"
+      "Next": "Check status result"
     },
-    "CheckResultForDistributionAvailable": {
+    "Check status result": {
       "Type": "Choice",
       "Choices": [
         {
           "Variable": "$.DistributionStatusResult",
           "StringEquals": "ok",
-          "Next": "TestDistribution"
+          "Next": "Test staging distribution"
         },
         {
           "Variable": "$.DistributionStatusResult",
           "StringEquals": "ng",
-          "Next": "WaitForDistributionAvailable"
+          "Next": "Wait for distribution to become to available"
         }
       ],
-      "Default": "EndStateMachine"
+      "Default": "End state machine"
     },
-    "TestDistribution": {
+    "Test staging distribution": {
       "Type": "Task",
       "Resource": "${TestDistributionFunctionArn}",
       "OutputPath": "$.Payload",
@@ -87,25 +87,25 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "CheckTestDistributionResult"
+      "Next": "Check test result of staging distribution"
     },
-    "CheckTestDistributionResult": {
+    "Check test result of staging distribution": {
       "Type": "Choice",
       "Choices": [
         {
           "Variable": "$.TestResult",
           "StringEquals": "ok",
-          "Next": "PromoteDistribution"
+          "Next": "Promote distribution"
         },
         {
           "Variable": "$.TestResult",
           "StringEquals": "ng",
-          "Next": "EndStateMachine"
+          "Next": "End state machine"
         }
       ],
-      "Default": "EndStateMachine"
+      "Default": "End state machine"
     },
-    "PromoteDistribution": {
+    "Promote distribution": {
       "Type": "Task",
       "Resource": "${PromoteDistributionFunctionArn}",
       "OutputPath": "$.Payload",
@@ -125,78 +125,78 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "WaitForPromoteDistribution"
+      "Next": "Wait for promotion"
     },
-    "WaitForPromoteDistribution": {
+    "Wait for promotion": {
       "Type": "Wait",
       "Seconds": 60,
-      "Next": "StatusCheckForPromoteDistribution"
+      "Next": "Get distribution status after promotion"
     },
-    "StatusCheckForPromoteDistribution": {
+    "Get distribution status after promotion": {
       "Type": "Task",
       "Resource": "${StatusCheckFunctionArn}",
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$"
       },
-      "Next": "CheckResultForPromoteDistribution"
+      "Next": "Check status after promotion"
     },
-    "CheckResultForPromoteDistribution": {
+    "Check status after promotion": {
       "Type": "Choice",
       "Choices": [
         {
           "Variable": "$.DistributionStatusResult",
           "StringEquals": "ok",
-          "Next": "DetachContinuousDeploymentpolicy"
+          "Next": "Detach continuous deployment policy"
         },
         {
           "Variable": "$.DistributionStatusResult",
           "StringEquals": "ng",
-          "Next": "WaitForPromoteDistribution"
+          "Next": "Wait for promotion"
         }
       ],
-      "Default": "EndStateMachine"
+      "Default": "End state machine"
     },
-    "DetachContinuousDeploymentpolicy": {
+    "Detach continuous deployment policy": {
       "Type": "Task",
       "Resource": "${DetachContinuousDeploymentPolicyFunctionArn}",
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$"
       },
-      "Next": "WaitForDisableStagingDistribution"
+      "Next": "Wait for detachment of policy"
     },
-    "WaitForDisableStagingDistribution": {
+    "Wait for detachment of policy": {
       "Type": "Wait",
       "Seconds": 60,
-      "Next": "StatusCheckForDisableStagingDistribution"
+      "Next": "Get distribution status after detachment of policy"
     },
-    "StatusCheckForDisableStagingDistribution": {
+    "Get distribution status after detachment of policy": {
       "Type": "Task",
       "Resource": "${StatusCheckFunctionArn}",
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$"
       },
-      "Next": "CheckResultForDisableStagingDistribution"
+      "Next": "Check status result after detachment of policy"
     },
-    "CheckResultForDisableStagingDistribution": {
+    "Check status result after detachment of policy": {
       "Type": "Choice",
       "Choices": [
         {
           "Variable": "$.DistributionStatusResult",
           "StringEquals": "ok",
-          "Next": "DisableStagingDistribution"
+          "Next": "Disable staging distribution"
         },
         {
           "Variable": "$.DistributionStatusResult",
           "StringEquals": "ng",
-          "Next": "WaitForDisableStagingDistribution"
+          "Next": "Wait for detachment of policy"
         }
       ],
-      "Default": "EndStateMachine"
+      "Default": "End state machine"
     },
-    "DisableStagingDistribution": {
+    "Disable staging distribution": {
       "Type": "Task",
       "Resource": "${DisableStagingDistributionFunctionArn}",
       "OutputPath": "$.Payload",
@@ -216,9 +216,72 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "EndStateMachine"
+      "Next": "Determine weather delete staging or not"
     },
-    "EndStateMachine": {
+    "Determine weather delete staging or not": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.DeleteStagingFlag",
+          "BooleanEquals": true,
+          "Next": "Wait for disabling"
+        }
+      ],
+      "Default": "End state machine"
+    },
+    "Wait for disabling": {
+      "Type": "Wait",
+      "Seconds": 60,
+      "Next": "Get distribution status after disabling"
+    },
+    "Get distribution status after disabling": {
+      "Type": "Task",
+      "Resource": "${StatusCheckFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Next": "Check status after disabling"
+    },
+    "Check status after disabling": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ok",
+          "Next": "Delete staging distribution"
+        },
+        {
+          "Variable": "$.DistributionStatusResult",
+          "StringEquals": "ng",
+          "Next": "Wait for disabling"
+        }
+      ],
+      "Default": "End state machine"
+    },
+    "Delete staging distribution": {
+      "Type": "Task",
+      "Resource": "${DeleteStagingDistributionFunctionArn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ClientExecutionTimeoutException",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "End state machine"
+    },
+    "End state machine": {
       "Type": "Pass",
       "End": true
     }

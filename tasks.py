@@ -11,7 +11,7 @@ def build(c):
     )
     invoke.run("black functions")
     invoke.run("sam validate --lint")
-    invoke.run("sam build --parallel")
+    invoke.run("sam build --parallel --use-container")
 
 
 @invoke.task(build)
