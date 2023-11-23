@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    name: Test
+    name: Build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,19 +13,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Tools
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+        uses: aws-actions/setup-sam@v2
+        with:
+          version: ${{ matrix.aws-sam-cli-version }}
       - name: Install poetry
         run: pip install --upgrade pip && pip install poetry
       - name: Install packages
         run: poetry install --no-interaction --with dev
       - name: Run test
         run: poetry run cfn-lint --template template.yaml
-      - name: Set up AWS SAM CLI
-        uses: aws-actions/setup-sam@v2
-        with:
-          version: ${{ matrix.aws-sam-cli-version }}
       - name: Run build
         run: poetry run inv build
