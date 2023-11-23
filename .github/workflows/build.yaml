@@ -3,12 +3,13 @@ name: build
 on: [push]
 
 jobs:
-  test:
+  build:
     name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.11]
+        aws-sam-cli-version: [1.100.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,18 +23,9 @@ jobs:
         run: poetry install --no-interaction --with dev
       - name: Run test
         run: poetry run cfn-lint --template template.yaml
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        aws-sam-cli-version: [1.100.0]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: Set up AWS SAM CLI
         uses: aws-actions/setup-sam@v2
         with:
           version: ${{ matrix.aws-sam-cli-version }}
       - name: Run build
-        run: sam build --use-container
+        run: poetry run inv build
