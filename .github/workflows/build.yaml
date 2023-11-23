@@ -13,10 +13,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Tools
+      - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up AWS SAM CLI ${{ matrix.aws-sam-cli-version }}
         uses: aws-actions/setup-sam@v2
         with:
           version: ${{ matrix.aws-sam-cli-version }}
