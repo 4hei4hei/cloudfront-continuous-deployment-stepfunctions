@@ -54,7 +54,8 @@ inv deploy
 {
   "Url": "https://hoge.fuga",
   "PrimaryDistributionId": "既にデプロイされている Primary distribution の ID",
-  "StagingDistributionColor": "Staging に設定する色 (blue or green)"
+  "StagingDistributionColor": "Staging に設定する色 (blue or green)",
+  "DeleteStagingFlag": Boolean (後掃除で Staging を削除するかどうか)
 }
 ```
 
