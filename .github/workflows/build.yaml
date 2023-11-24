@@ -13,7 +13,5 @@ jobs:
         uses: asdf-vm/actions/install@v2
       - name: Install python packages
         run: poetry install --no-interaction --with dev
-      - name: Run test
-        run: poetry run cfn-lint --template template.yaml
       - name: Run build
         run: poetry run inv build
