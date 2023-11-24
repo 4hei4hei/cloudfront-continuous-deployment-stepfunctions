@@ -2,7 +2,7 @@
 name = "cloudfront-continuous-deployment-stepfunctions"
 version = "0.1.0"
 description = ""
-authors = ["4hei4ehi <4hei4hei@gmail.com>"]
+authors = ["4hei4hei <4hei4hei@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
