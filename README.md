@@ -40,9 +40,9 @@ Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動�
 sam build && sam deploy
 ```
 
-本リポジトリでは Python パッケージ invoke でタスク化している
+また、本リポジトリでは Python パッケージ invoke でコマンドのタスク化を行なっている
 
-そのため、以下のコマンドでビルドからデプロイまでが自動で実行可能
+そのため、以下のコマンドでもビルドからデプロイまでが自動で実行可能
 
 ```
 inv deploy
@@ -61,7 +61,7 @@ inv deploy
 
 以下のフローを辿る StateMachine の処理が起動する
 
-![StateMachine Sample](./statemachine_flow.png)
+![StateMachine Sample](./statemachine/workflow.png)
 
 # References
 
