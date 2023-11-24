@@ -5,12 +5,18 @@ env = "default"
 
 
 @invoke.task
+def validate(c):
+    invoke.run("black functions")
+    invoke.run("flake8 functions --max-line-length 120")
+    invoke.run("sam validate --lint")
+    invoke.run("cfn-lint --template template.yaml")
+
+
+@invoke.task(validate)
 def build(c):
     invoke.run(
         "poetry export -f requirements.txt --with test_distribution --without-hashes --output ./functions/test_distribution/requirements.txt"
     )
-    invoke.run("black functions")
-    invoke.run("sam validate --lint")
     invoke.run("sam build --parallel --use-container")
 
 
