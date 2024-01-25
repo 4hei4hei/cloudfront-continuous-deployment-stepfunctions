@@ -26,7 +26,7 @@
     },
     "Wait for distribution to become to available": {
       "Type": "Wait",
-      "Seconds": 60,
+      "Seconds": 120,
       "Next": "Get distribution status"
     },
     "Get distribution status": {
@@ -65,7 +65,7 @@
           "Next": "Wait for distribution to become to available"
         }
       ],
-      "Default": "End state machine"
+      "Default": "Fail"
     },
     "Test staging distribution": {
       "Type": "Task",
@@ -83,7 +83,7 @@
             "Lambda.SdkClientException"
           ],
           "IntervalSeconds": 2,
-          "MaxAttempts": 6,
+          "MaxAttempts": 30,
           "BackoffRate": 2
         }
       ],
@@ -100,10 +100,10 @@
         {
           "Variable": "$.TestResult",
           "StringEquals": "ng",
-          "Next": "End state machine"
+          "Next": "Fail"
         }
       ],
-      "Default": "End state machine"
+      "Default": "Fail"
     },
     "Promote distribution": {
       "Type": "Task",
@@ -129,7 +129,7 @@
     },
     "Wait for promotion": {
       "Type": "Wait",
-      "Seconds": 60,
+      "Seconds": 120,
       "Next": "Get distribution status after promotion"
     },
     "Get distribution status after promotion": {
@@ -155,7 +155,7 @@
           "Next": "Wait for promotion"
         }
       ],
-      "Default": "End state machine"
+      "Default": "Fail"
     },
     "Detach continuous deployment policy": {
       "Type": "Task",
@@ -168,7 +168,7 @@
     },
     "Wait for detachment of policy": {
       "Type": "Wait",
-      "Seconds": 60,
+      "Seconds": 120,
       "Next": "Get distribution status after detachment of policy"
     },
     "Get distribution status after detachment of policy": {
@@ -194,7 +194,7 @@
           "Next": "Wait for detachment of policy"
         }
       ],
-      "Default": "End state machine"
+      "Default": "Fail"
     },
     "Disable staging distribution": {
       "Type": "Task",
@@ -227,11 +227,11 @@
           "Next": "Wait for disabling"
         }
       ],
-      "Default": "End state machine"
+      "Default": "Succeed"
     },
     "Wait for disabling": {
       "Type": "Wait",
-      "Seconds": 60,
+      "Seconds": 120,
       "Next": "Get distribution status after disabling"
     },
     "Get distribution status after disabling": {
@@ -257,7 +257,7 @@
           "Next": "Wait for disabling"
         }
       ],
-      "Default": "End state machine"
+      "Default": "Fail"
     },
     "Delete staging distribution": {
       "Type": "Task",
@@ -279,11 +279,13 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "End state machine"
+      "Next": "Succeed"
     },
-    "End state machine": {
-      "Type": "Pass",
-      "End": true
+    "Succeed": {
+      "Type": "Succeed"
+    },
+    "Fail": {
+      "Type": "Fail"
     }
   }
 }
