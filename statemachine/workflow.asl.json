@@ -26,7 +26,7 @@
     },
     "Wait for distribution to become to available": {
       "Type": "Wait",
-      "Seconds": 180,
+      "Seconds": 120,
       "Next": "Get distribution status"
     },
     "Get distribution status": {
@@ -129,7 +129,7 @@
     },
     "Wait for promotion": {
       "Type": "Wait",
-      "Seconds": 180,
+      "Seconds": 120,
       "Next": "Get distribution status after promotion"
     },
     "Get distribution status after promotion": {
@@ -168,7 +168,7 @@
     },
     "Wait for detachment of policy": {
       "Type": "Wait",
-      "Seconds": 180,
+      "Seconds": 120,
       "Next": "Get distribution status after detachment of policy"
     },
     "Get distribution status after detachment of policy": {
@@ -231,7 +231,7 @@
     },
     "Wait for disabling": {
       "Type": "Wait",
-      "Seconds": 180,
+      "Seconds": 120,
       "Next": "Get distribution status after disabling"
     },
     "Get distribution status after disabling": {
