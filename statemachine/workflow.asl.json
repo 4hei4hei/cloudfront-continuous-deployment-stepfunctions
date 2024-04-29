@@ -1,5 +1,5 @@
 {
-  "Comment": "State machine for cloudfront continuous deployment",
+  "Comment": "State machine for cloudfront-continuous-deployment-workflow",
   "StartAt": "Create staging distribution",
   "States": {
     "Create staging distribution": {
@@ -55,13 +55,29 @@
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ok",
+          "And": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "Deployed"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "Deployed"
+            }
+          ],
           "Next": "Test staging distribution"
         },
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ng",
+          "Or": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "InProgress"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "InProgress"
+            }
+          ],
           "Next": "Wait for distribution to become to available"
         }
       ],
@@ -145,13 +161,29 @@
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ok",
+          "And": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "Deployed"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "Deployed"
+            }
+          ],
           "Next": "Detach continuous deployment policy"
         },
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ng",
+          "Or": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "InProgress"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "InProgress"
+            }
+          ],
           "Next": "Wait for promotion"
         }
       ],
@@ -184,13 +216,29 @@
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ok",
+          "And": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "Deployed"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "Deployed"
+            }
+          ],
           "Next": "Disable staging distribution"
         },
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ng",
+          "Or": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "InProgress"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "InProgress"
+            }
+          ],
           "Next": "Wait for detachment of policy"
         }
       ],
@@ -222,12 +270,38 @@
       "Type": "Choice",
       "Choices": [
         {
+          "And": [
+            {
+              "Variable": "$.DeleteStagingFlag",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.DeleteStagingFlag",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "Wait for disabling"
+        },
+        {
+          "And": [
+            {
+              "Variable": "$.DeleteStagingFlag",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.DeleteStagingFlag",
+              "BooleanEquals": false
+            }
+          ],
+          "Next": "Succeed"
+        },
+        {
           "Variable": "$.DeleteStagingFlag",
-          "BooleanEquals": true,
+          "IsPresent": false,
           "Next": "Wait for disabling"
         }
       ],
-      "Default": "Succeed"
+      "Default": "Wait for disabling"
     },
     "Wait for disabling": {
       "Type": "Wait",
@@ -247,13 +321,29 @@
       "Type": "Choice",
       "Choices": [
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ok",
+          "And": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "Deployed"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "Deployed"
+            }
+          ],
           "Next": "Delete staging distribution"
         },
         {
-          "Variable": "$.DistributionStatusResult",
-          "StringEquals": "ng",
+          "Or": [
+            {
+              "Variable": "$.PrimaryDistributionStatusResult",
+              "StringEquals": "InProgress"
+            },
+            {
+              "Variable": "$.StagingDistributionStatusResult",
+              "StringEquals": "InProgress"
+            }
+          ],
           "Next": "Wait for disabling"
         }
       ],
