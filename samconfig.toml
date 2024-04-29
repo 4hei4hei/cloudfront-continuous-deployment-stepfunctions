@@ -10,13 +10,10 @@ parallel = true
 lint = true
 
 [default.deploy.parameters]
-stack_name = "cfcd-dev"
+stack_name = "cloudfront-continuous-deployment-workflow-dev"
 s3_bucket = "YOUR_S3_BUCKET_NAME"
-s3_prefix = "cloudfront-cd-stepfunctions/dev"
-profile = "YOUR_AWS_PROFILE_NAME"
-region = "YOUR_AWS_DEFAULT_REGION"
+s3_prefix = "cloudfront-continuous-deployment-workflow/dev"
+region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_NAMED_IAM"
-parameter_overrides = [
-  "Environment=dev"
-]
+parameter_overrides = ["Environment=dev"]
