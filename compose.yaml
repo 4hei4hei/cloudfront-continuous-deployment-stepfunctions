@@ -1,0 +1,9 @@
+services:
+  localstack:
+    container_name: localstack.4hei4hei.local
+    image: localstack/localstack:3.4.0
+    ports:
+      - 4566:4566
+    volumes:
+      - "./docker-resources/localstack:/etc/localstack/init/ready.d"
+      - "./data:/home/localstack/data"

@@ -12,12 +12,27 @@ def validate(c):
     invoke.run("cfn-lint --template template.yaml")
 
 
+@invoke.task
+def up(c):
+    invoke.run(f"docker compose up -d")
+
+
+@invoke.task
+def down(c):
+    invoke.run(f"docker compose down")
+
+
 @invoke.task(validate)
 def build(c):
     invoke.run(
         "poetry export -f requirements.txt --with test_distribution --without-hashes --output ./functions/test_distribution/requirements.txt"
     )
     invoke.run("sam build --parallel --use-container")
+
+
+@invoke.task(build)
+def test(c):
+    invoke.run(f"pytest -v")
 
 
 @invoke.task(build)
