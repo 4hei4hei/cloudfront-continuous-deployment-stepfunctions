@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "cloudfront-continuous-deployment-stepfunctions"
+name = "cloudfront-continuous-deployment-workflow"
 version = "0.1.0"
 description = ""
 authors = ["4hei4hei"]
@@ -23,3 +23,9 @@ requests = "^2.31.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.flake8]
+max-line-length = 120
+
+[tool.pytest]
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = "True"
