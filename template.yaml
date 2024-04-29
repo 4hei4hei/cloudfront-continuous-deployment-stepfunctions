@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  python3.11
+  Python3.11
 
-  SAM Template for cloudfront-continuous-deployment-stepfunctions
+  SAM Template for cloudfront-continuous-deployment-workflow
 
 Globals:
   Function:
@@ -14,13 +14,16 @@ Globals:
 Parameters:
   ResourcePrefix:
     Type: String
-    Default: cfcd
+    Default: cfcd-workflow
+  Environment:
+    Type: String
+    Default: dev
 
 Resources:
   CloudFrontContinuousDeploymentStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      Name: !Sub ${ResourcePrefix}-statemachine
+      Name: !Sub ${ResourcePrefix}-${Environment}
       Role: !GetAtt CloudFrontContinuousDeploymentStateMachineExecutionRole.Arn
       DefinitionUri: statemachine/workflow.asl.json
       DefinitionSubstitutions:
@@ -63,56 +66,56 @@ Resources:
   CreateStagingDistributionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ResourcePrefix}-create-staging-distribution-function
+      FunctionName: !Sub ${ResourcePrefix}-create-staging-distribution-${Environment}
       CodeUri: functions/create_staging_distribution
       Role: !GetAtt LambdaExecutionRole.Arn
 
   StatusCheckFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ResourcePrefix}-status-check-function
+      FunctionName: !Sub ${ResourcePrefix}-status-check-${Environment}
       CodeUri: functions/status_check
       Role: !GetAtt LambdaExecutionRole.Arn
 
   TestDistributionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ResourcePrefix}-test-distribution-function
+      FunctionName: !Sub ${ResourcePrefix}-test-distribution-${Environment}
       CodeUri: functions/test_distribution
       Role: !GetAtt LambdaExecutionRole.Arn
 
   PromoteDistributionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ResourcePrefix}-promote-distribution-function
+      FunctionName: !Sub ${ResourcePrefix}-promote-distribution-${Environment}
       CodeUri: functions/promote_distribution
       Role: !GetAtt LambdaExecutionRole.Arn
 
   DetachContinuousDeploymentPolicyFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ResourcePrefix}-detach-continuous-deployment-policy-function
+      FunctionName: !Sub ${ResourcePrefix}-detach-continuous-deployment-policy-${Environment}
       CodeUri: functions/detach_continuous_deployment_policy
       Role: !GetAtt LambdaExecutionRole.Arn
 
   DisableStagingDistributionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ResourcePrefix}-disable-staging-distribution-function
+      FunctionName: !Sub ${ResourcePrefix}-disable-staging-distribution-${Environment}
       CodeUri: functions/disable_staging_distribution
       Role: !GetAtt LambdaExecutionRole.Arn
 
   DeleteStagingDistributionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${ResourcePrefix}-delete-staging-distribution-function
+      FunctionName: !Sub ${ResourcePrefix}-delete-staging-distribution-${Environment}
       CodeUri: functions/delete_staging_distribution
       Role: !GetAtt LambdaExecutionRole.Arn
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ResourcePrefix}-lambda-execution-role
+      RoleName: !Sub ${ResourcePrefix}-lambda-execution-${Environment}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -120,15 +123,13 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: LambdaExecutionPolicy
+        - PolicyName: AllowDistributionOperation
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Effect: Allow
-                Action:
-                  - logs:*
-                Resource: "*"
               - Effect: Allow
                 Action:
                   - cloudfront:CopyDistribution
@@ -142,3 +143,20 @@ Resources:
                   - cloudfront:UpdateContinuousDeploymentPolicy
                   - cloudfront:UpdateDistribution
                 Resource: "*"
+        - PolicyName: AllowGetSSMParameter
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ResourcePrefix}/${Environment}
+
+  StagingConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Parameter for staging config for cloudfront-continuous-deployment-workflow
+      Name: !Sub /${ResourcePrefix}/${Environment}
+      Tier: Standard
+      Type: String
+      Value: init

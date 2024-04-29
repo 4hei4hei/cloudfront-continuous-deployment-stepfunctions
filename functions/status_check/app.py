@@ -1,16 +1,13 @@
 import boto3
-from botocore.config import Config
 
 
-config = Config(retries={"max_attempts": 10, "mode": "standard"})
-cloudfront = boto3.client("cloudfront", config=config)
+cloudfront = boto3.client("cloudfront")
 
 
 def lambda_handler(event, context):
     payload = event["Payload"]
     primary_distribution_id = payload["PrimaryDistributionId"]
     staging_distribution_id = payload["StagingDistributionId"]
-    distribution_status_result = "ng"
 
     # Primary / Staging distribution の状態を取得して利用可能かを判定させる
     primary_distribution_status_result = cloudfront.get_distribution(
@@ -20,28 +17,10 @@ def lambda_handler(event, context):
         Id=staging_distribution_id
     )["Distribution"]["Status"]
 
-    if (
-        primary_distribution_status_result == "Deployed"
-        and staging_distribution_status_result == "Deployed"
-    ):
-        distribution_status_result = "ok"
-        primary_distribution_etag = cloudfront.get_distribution_config(
-            Id=primary_distribution_id
-        )["ETag"]
-        staging_distribution_etag = cloudfront.get_distribution_config(
-            Id=staging_distribution_id
-        )["ETag"]
-        return {
-            "Payload": payload
-            | {
-                "DistributionStatusResult": distribution_status_result,
-                "PrimaryDistributionETag": primary_distribution_etag,
-                "StagingDistributionETag": staging_distribution_etag,
-            }
+    return {
+        "Payload": payload
+        | {
+            "PrimaryDistributionStatusResult": primary_distribution_status_result,
+            "StagingDistributionStatusResult": staging_distribution_status_result,
         }
-    else:
-        distribution_status_result = "ng"
-        return {
-            "Payload": payload
-            | {"DistributionStatusResult": distribution_status_result}
-        }
+    }

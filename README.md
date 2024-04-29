@@ -1,12 +1,12 @@
-# cloudfront-continuous-deployment-stepfunctions
+# cloudfront-continuous-deployment-workflow
 
-Amazon CloudFront Continous Deployment を AWS StepFunctions で自動化させる
+Amazon CloudFront Continous Deployment を AWS StepFunctions で自動化する
 
 仕様
 
 - Staging distribution と Continuous deployment policy の作成から Promote を行う
 
-- その後、Continuous deployment policy の detach と Staging distribution を Disabled 状態にする後掃除までを行う
+- その後、Continuous deployment policy の detach と Staging distribution を削除する後掃除までを行う
 
 # Requirements
 
@@ -20,15 +20,29 @@ Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動�
 
 # Preconditions
 
-本リポジトリの StepFunctions では Origin を S3 とする CloudFront を前提としている
+この ワークフローの実行には以下の点を予め満足しておく必要がある。
 
-そのため事前に Origin となる S3 の以下のパスに index.html を 2 種類用意する
+- 本 ワークフロー用の SAM テンプレートの Stack をデプロイしておく
 
-- s3://{S3_BUCKET_NAME}/blue/index.html
+- ワークフロー実行前に SSM ParameterStore へ、更新したい内容の CloudFront distribution の設定を予め格納しておく
 
-- s3://{S3_BUCKET_NAME}/green/index.html
+## パラメータの形式
 
-いずれかを CloudFront 経由で閲覧できる状態としておく
+```
+aws cloudfront get-distribution-config
+```
+
+で取得できるレスポンスのうち、修正したい項目を下のレスポンスの構造を維持してパラメータに格納する。
+
+e.g. `DefaultRootObject` を green/index.html へ変更したい場合、パラメータは以下のような値を格納する。
+
+```
+{
+  "DistributionConfig": {
+      "DefaultRootObject": "green/index.html"
+  }
+}
+```
 
 # How to use
 
@@ -54,8 +68,8 @@ inv deploy
 {
   "Url": "https://hoge.fuga",
   "PrimaryDistributionId": "既にデプロイされている Primary distribution の ID",
-  "StagingDistributionColor": "Staging に設定する色 (blue or green)",
-  "DeleteStagingFlag": Boolean (後掃除で Staging を削除するかどうか)
+  "DeploymentConfigName": "SSM ParameterStore に格納した CloudFront distribution の設定用パラメータ名",
+  "DeleteStagingFlag": Boolean (後掃除で Staging を削除するかどうか ※ 入力しない場合はデフォルトで後掃除)
 }
 ```
 

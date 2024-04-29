@@ -1,16 +1,16 @@
 import boto3
+import json
 import uuid
-from botocore.config import Config
 
 
-config = Config(retries={"max_attempts": 10, "mode": "standard"})
-cloudfront = boto3.client("cloudfront", config=config)
+cloudfront = boto3.client("cloudfront")
+ssm = boto3.client("ssm")
 
 
 def lambda_handler(event, context):
     payload = event["Payload"]
     primary_distribution_id = payload["PrimaryDistributionId"]
-    staging_distribution_color = payload["StagingDistributionColor"]
+    configs_for_deployment_name = payload["DeploymentConfigName"]
 
     # Primary distribution を基に Staiging distribution を作成する
     primary_distribution_config = cloudfront.get_distribution_config(
@@ -31,11 +31,16 @@ def lambda_handler(event, context):
     )["DistributionConfig"]
 
     # 流用する Distribution config の中で上書きしたい項目をここで上書きしておく
-    # 今回は Staging であることを判定する項目を True とし、インデックスドキュメントの配置場所を更新させる
-    staging_distribution_config["Staging"] = True
-    staging_distribution_config[
-        "DefaultRootObject"
-    ] = f"{staging_distribution_color}/index.html"
+    # 変更箇所は SSM Parameter Store に登録する
+    configs_for_deployment = json.loads(
+        ssm.get_parameter(Name=configs_for_deployment_name, WithDecryption=True)[
+            "Parameter"
+        ]["Value"]
+    )
+    for config in configs_for_deployment["DistributionConfig"]:
+        staging_distribution_config[config] = configs_for_deployment[
+            "DistributionConfig"
+        ].get(config)
 
     # 作成した Staging distribution を Update する
     cloudfront.update_distribution(

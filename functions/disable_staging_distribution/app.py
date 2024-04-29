@@ -1,9 +1,7 @@
 import boto3
-from botocore.config import Config
 
 
-config = Config(retries={"max_attempts": 10, "mode": "standard"})
-cloudfront = boto3.client("cloudfront", config=config)
+cloudfront = boto3.client("cloudfront")
 
 
 def lambda_handler(event, context):
