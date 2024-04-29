@@ -26,6 +26,24 @@ Mac 環境かつ asdf 管理にて、ツール群は以下の version にて動�
 
 - ワークフロー実行前に SSM ParameterStore へ、更新したい内容の CloudFront distribution の設定を予め格納しておく
 
+## パラメータの形式
+
+```
+aws cloudfront get-distribution-config
+```
+
+で取得できるレスポンスのうち、修正したい項目を下のレスポンスの構造を維持してパラメータに格納する。
+
+e.g. `DefaultRootObject` を green/index.html へ変更したい場合、パラメータは以下のような値を格納する。
+
+```
+{
+  "DistributionConfig": {
+      "DefaultRootObject": "green/index.html"
+  }
+}
+```
+
 # How to use
 
 1. AWS SAM CLI にて本 SAM テンプレートをデプロイする
