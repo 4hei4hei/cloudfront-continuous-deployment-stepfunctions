@@ -7,7 +7,7 @@ env = "default"
 @invoke.task
 def validate(c):
     invoke.run("black functions")
-    invoke.run("flake8 functions")
+    invoke.run("flake8 functions --max-line-length=120")
     invoke.run("sam validate --lint")
     invoke.run("cfn-lint --template template.yaml")
 
